@@ -1245,4 +1245,37 @@ WHERE column_name IS NULL
 
 ### 17. Why is = NULL incorrect?
 
-`NULL` represents an unknown value and cannot be compared using the normal equa
+`NULL` represents an unknown value and cannot be compared using the normal equality operator.
+
+### 18. What is the difference between IS NULL and IS NOT NULL?
+
+`IS NULL` finds missing values. `IS NOT NULL` finds non-missing values.
+
+### 19. Which is evaluated first, AND or OR?
+
+`AND` is normally evaluated before `OR`.
+
+### 20. Why should parentheses be used with AND and OR?
+
+They prevent ambiguous logic and make the intended condition clear.
+
+### 21. What is the difference between = and LIKE?
+
+`=` checks an exact match. `LIKE` checks a text pattern.
+
+### 22. How can WHERE help in application support?
+
+It can locate user accounts, filter failed transactions, find open tickets, identify missing values, verify record status, and troubleshoot application data.
+
+### 23. Can a SELECT alias normally be used in WHERE?
+
+No. The `WHERE` clause is generally evaluated before the `SELECT` alias is created.
+
+### 24. How do you filter a complete date range on a date-time column?
+
+Use an inclusive starting value and an exclusive next-day ending value.
+
+```sql
+WHERE created_at >= '2026-07-01'
+  AND created_at < '2026-07-11'
+```
