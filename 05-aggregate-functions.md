@@ -1321,4 +1321,130 @@ FROM employees;
 * `COALESCE()` replaces `NULL` results.
 * `MAX()` returns a value, not the complete row.
 * Use aliases to create clear report headings.
-*
+* Use `DISTINCT` only when unique values are actually required.
+
+---
+
+## Interview questions
+
+### 1. What is an aggregate function?
+
+An aggregate function calculates one summarized result from multiple rows.
+
+### 2. What are the main aggregate functions?
+
+* `COUNT()`
+* `SUM()`
+* `AVG()`
+* `MIN()`
+* `MAX()`
+
+### 3. What does COUNT(*) do?
+
+`COUNT(*)` counts every row in the result.
+
+### 4. What does COUNT(column) do?
+
+`COUNT(column)` counts only non-`NULL` values in that column.
+
+### 5. What is the difference between COUNT(*) and COUNT(column)?
+
+`COUNT(*)` counts rows. `COUNT(column)` counts non-`NULL` values in the selected column.
+
+### 6. What does COUNT(DISTINCT column) do?
+
+It counts unique non-`NULL` values.
+
+### 7. What does SUM() do?
+
+`SUM()` calculates the total of a numeric column.
+
+### 8. What does AVG() do?
+
+`AVG()` calculates the average of a numeric column.
+
+### 9. What does MIN() do?
+
+`MIN()` returns the lowest value.
+
+### 10. What does MAX() do?
+
+`MAX()` returns the highest value.
+
+### 11. Do aggregate functions include NULL values?
+
+Most aggregate functions ignore `NULL` values. `COUNT(*)` counts rows regardless of `NULL` values.
+
+### 12. Does AVG() treat NULL as zero?
+
+No. `AVG()` ignores `NULL` values.
+
+### 13. How do you round an average to two decimal places?
+
+```sql
+SELECT ROUND(AVG(salary), 2) AS average_salary
+FROM employees;
+```
+
+### 14. How do you count active employees?
+
+```sql
+SELECT COUNT(*) AS active_employee_count
+FROM employees
+WHERE status = 'Active';
+```
+
+### 15. How do you find the highest salary?
+
+```sql
+SELECT MAX(salary) AS highest_salary
+FROM employees;
+```
+
+### 16. Does MAX(salary) return the employee name?
+
+No. It returns only the highest salary value.
+
+### 17. How do you return the employee with the highest salary?
+
+```sql
+SELECT employee_name, salary
+FROM employees
+ORDER BY salary DESC
+LIMIT 1;
+```
+
+### 18. What happens when SUM() receives no matching rows?
+
+It may return `NULL`.
+
+### 19. How do you return zero instead of NULL?
+
+```sql
+SELECT COALESCE(SUM(salary), 0) AS total_salary
+FROM employees;
+```
+
+### 20. Can MIN() and MAX() work with dates?
+
+Yes. `MIN()` returns the earliest date, and `MAX()` returns the latest date.
+
+### 21. Can MIN() and MAX() work with text?
+
+Yes. They return values based on the database collation and sorting rules.
+
+### 22. Why are aliases useful with aggregate functions?
+
+Aliases create clear and readable result headings.
+
+### 23. Can WHERE be used with aggregate functions?
+
+Yes. `WHERE` filters rows before the aggregate calculation.
+
+### 24. Why is SUM(DISTINCT salary) risky?
+
+It ignores repeated salary values, even when those values belong to different employees.
+
+### 25. How are aggregate functions useful in application support?
+
+They help count errors, summarize transactions, calculate resolution times, find oldest or latest records, and prepare operational reports.
