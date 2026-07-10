@@ -1146,4 +1146,572 @@ A simplified processing order is:
 4. Aggregate functions
 5. HAVING
 6. SELECT
-7. DIS
+7. DISTINCT
+8. ORDER BY
+9. LIMIT
+```
+
+Example:
+
+```sql
+SELECT
+    department,
+    COUNT(*) AS employee_count
+FROM employees
+WHERE status = 'Active'
+GROUP BY department
+HAVING COUNT(*) >= 2
+ORDER BY employee_count DESC
+LIMIT 3;
+```
+
+Conceptual execution:
+
+```text
+1. Read employees
+2. Keep active employees
+3. Group by department
+4. Count employees in each group
+5. Keep groups with at least two employees
+6. Sort by count
+7. Return three groups
+```
+
+---
+
+## Common mistakes
+
+## Mistake 1: Selecting a column not included in GROUP BY
+
+Wrong:
+
+```sql
+SELECT
+    employee_name,
+    department,
+    COUNT(*)
+FROM employees
+GROUP BY department;
+```
+
+The database cannot determine which employee name represents the department.
+
+Correct:
+
+```sql
+SELECT
+    department,
+    COUNT(*) AS employee_count
+FROM employees
+GROUP BY department;
+```
+
+---
+
+## Mistake 2: Using WHERE with aggregate functions
+
+Wrong:
+
+```sql
+SELECT
+    department,
+    COUNT(*) AS employee_count
+FROM employees
+WHERE COUNT(*) > 1
+GROUP BY department;
+```
+
+Correct:
+
+```sql
+SELECT
+    department,
+    COUNT(*) AS employee_count
+FROM employees
+GROUP BY department
+HAVING COUNT(*) > 1;
+```
+
+Aggregate conditions belong in `HAVING`.
+
+---
+
+## Mistake 3: Using HAVING for normal row filters
+
+Weak:
+
+```sql
+SELECT
+    department,
+    COUNT(*) AS employee_count
+FROM employees
+GROUP BY department
+HAVING department = 'IT Support';
+```
+
+Better:
+
+```sql
+SELECT
+    department,
+    COUNT(*) AS employee_count
+FROM employees
+WHERE department = 'IT Support'
+GROUP BY department;
+```
+
+Use `WHERE` to filter normal rows before grouping.
+
+---
+
+## Mistake 4: Forgetting that WHERE runs before grouping
+
+```sql
+SELECT
+    department,
+    COUNT(*) AS employee_count
+FROM employees
+WHERE status = 'Active'
+GROUP BY department;
+```
+
+This counts only active employees.
+
+It does not count all employees and then label the result active.
+
+---
+
+## Mistake 5: Grouping by too many columns
+
+```sql
+SELECT
+    employee_id,
+    employee_name,
+    department,
+    COUNT(*) AS employee_count
+FROM employees
+GROUP BY employee_id, employee_name, department;
+```
+
+Because `employee_id` is unique, each employee becomes a separate group.
+
+The count will usually be `1` for every row.
+
+Group only by columns required by the report.
+
+---
+
+## Mistake 6: Grouping by too few columns
+
+```sql
+SELECT
+    department,
+    status,
+    COUNT(*) AS employee_count
+FROM employees
+GROUP BY department;
+```
+
+`status` is selected but not grouped or aggregated.
+
+Correct:
+
+```sql
+SELECT
+    department,
+    status,
+    COUNT(*) AS employee_count
+FROM employees
+GROUP BY department, status;
+```
+
+---
+
+## Mistake 7: Confusing DISTINCT and GROUP BY
+
+Use `DISTINCT` for unique values:
+
+```sql
+SELECT DISTINCT department
+FROM employees;
+```
+
+Use `GROUP BY` for summaries:
+
+```sql
+SELECT
+    department,
+    COUNT(*) AS employee_count
+FROM employees
+GROUP BY department;
+```
+
+---
+
+## Mistake 8: Expecting one result from GROUP BY
+
+Without grouping:
+
+```sql
+SELECT COUNT(*)
+FROM employees;
+```
+
+Returns one total.
+
+With grouping:
+
+```sql
+SELECT
+    department,
+    COUNT(*)
+FROM employees
+GROUP BY department;
+```
+
+Returns one total per department.
+
+---
+
+## Mistake 9: Forgetting NULL creates a group
+
+Rows with `NULL` in the grouped column may appear as a separate group.
+
+Use `COALESCE()` when a readable label is required.
+
+```sql
+SELECT
+    COALESCE(department, 'Unassigned') AS department_name,
+    COUNT(*) AS employee_count
+FROM employees
+GROUP BY COALESCE(department, 'Unassigned');
+```
+
+---
+
+## Mistake 10: Grouping full timestamps
+
+Weak:
+
+```sql
+SELECT
+    created_at,
+    COUNT(*)
+FROM tickets
+GROUP BY created_at;
+```
+
+Every timestamp may become a separate group.
+
+Better:
+
+```sql
+SELECT
+    DATE(created_at) AS created_date,
+    COUNT(*) AS ticket_count
+FROM tickets
+GROUP BY DATE(created_at);
+```
+
+---
+
+## Practice queries
+
+## Query 1
+
+Count employees in each department.
+
+```sql
+SELECT
+    department,
+    COUNT(*) AS employee_count
+FROM employees
+GROUP BY department;
+```
+
+## Query 2
+
+Calculate total salary by department.
+
+```sql
+SELECT
+    department,
+    SUM(salary) AS total_salary
+FROM employees
+GROUP BY department;
+```
+
+## Query 3
+
+Calculate average salary by department.
+
+```sql
+SELECT
+    department,
+    ROUND(AVG(salary), 2) AS average_salary
+FROM employees
+GROUP BY department;
+```
+
+## Query 4
+
+Count active employees by department.
+
+```sql
+SELECT
+    department,
+    COUNT(*) AS active_employee_count
+FROM employees
+WHERE status = 'Active'
+GROUP BY department;
+```
+
+## Query 5
+
+Find departments with at least two employees.
+
+```sql
+SELECT
+    department,
+    COUNT(*) AS employee_count
+FROM employees
+GROUP BY department
+HAVING COUNT(*) >= 2;
+```
+
+## Query 6
+
+Find departments with an average salary above `28000`.
+
+```sql
+SELECT
+    department,
+    ROUND(AVG(salary), 2) AS average_salary
+FROM employees
+GROUP BY department
+HAVING AVG(salary) > 28000;
+```
+
+## Query 7
+
+Group employees by department and status.
+
+```sql
+SELECT
+    department,
+    status,
+    COUNT(*) AS employee_count
+FROM employees
+GROUP BY department, status;
+```
+
+## Query 8
+
+Sort departments by employee count.
+
+```sql
+SELECT
+    department,
+    COUNT(*) AS employee_count
+FROM employees
+GROUP BY department
+ORDER BY employee_count DESC;
+```
+
+## Query 9
+
+Find the department with the highest total salary.
+
+```sql
+SELECT
+    department,
+    SUM(salary) AS total_salary
+FROM employees
+GROUP BY department
+ORDER BY total_salary DESC
+LIMIT 1;
+```
+
+## Query 10
+
+Find active departments with at least two employees.
+
+```sql
+SELECT
+    department,
+    COUNT(*) AS active_employee_count
+FROM employees
+WHERE status = 'Active'
+GROUP BY department
+HAVING COUNT(*) >= 2;
+```
+
+---
+
+## Quick recall notes
+
+* `GROUP BY` combines rows with matching values.
+* Aggregate functions calculate one result per group.
+* `COUNT()` counts rows inside each group.
+* `SUM()` calculates one total per group.
+* `AVG()` calculates one average per group.
+* `MIN()` finds the lowest value per group.
+* `MAX()` finds the highest value per group.
+* Multiple columns can be used in `GROUP BY`.
+* Multiple-column grouping uses unique combinations.
+* Selected normal columns should appear in `GROUP BY`.
+* `WHERE` filters rows before grouping.
+* `HAVING` filters groups after aggregation.
+* Aggregate conditions normally belong in `HAVING`.
+* Normal row conditions normally belong in `WHERE`.
+* `ORDER BY` sorts grouped results.
+* `LIMIT` can return the top grouped results.
+* `NULL` values may form a separate group.
+* `DISTINCT` returns unique values.
+* `GROUP BY` creates summarized results.
+
+---
+
+## Interview questions
+
+### 1. What does GROUP BY do?
+
+`GROUP BY` combines rows with matching values and allows aggregate functions to calculate one result for each group.
+
+### 2. Why is GROUP BY used?
+
+It is used to create category-wise summaries such as department counts, ticket status totals, and monthly transaction reports.
+
+### 3. How do you count employees by department?
+
+```sql
+SELECT
+    department,
+    COUNT(*) AS employee_count
+FROM employees
+GROUP BY department;
+```
+
+### 4. Can multiple columns be used in GROUP BY?
+
+Yes.
+
+```sql
+GROUP BY department, status;
+```
+
+This creates one group for every unique department and status combination.
+
+### 5. What does HAVING do?
+
+`HAVING` filters grouped or aggregated results.
+
+### 6. What is the difference between WHERE and HAVING?
+
+`WHERE` filters rows before grouping. `HAVING` filters groups after aggregation.
+
+### 7. Can aggregate functions be used in WHERE?
+
+Normally, no. Aggregate conditions should be placed in `HAVING`.
+
+### 8. How do you find departments with more than five employees?
+
+```sql
+SELECT
+    department,
+    COUNT(*) AS employee_count
+FROM employees
+GROUP BY department
+HAVING COUNT(*) > 5;
+```
+
+### 9. Can WHERE and HAVING be used together?
+
+Yes.
+
+```sql
+SELECT
+    department,
+    COUNT(*) AS active_employee_count
+FROM employees
+WHERE status = 'Active'
+GROUP BY department
+HAVING COUNT(*) >= 2;
+```
+
+### 10. What happens if a selected normal column is not included in GROUP BY?
+
+The query may fail or return unreliable results because the database cannot determine which value should represent the group.
+
+### 11. What is the difference between DISTINCT and GROUP BY?
+
+`DISTINCT` removes duplicate result values. `GROUP BY` creates groups for aggregate calculations.
+
+### 12. How do you calculate average salary by department?
+
+```sql
+SELECT
+    department,
+    AVG(salary) AS average_salary
+FROM employees
+GROUP BY department;
+```
+
+### 13. How do you sort grouped results?
+
+Use `ORDER BY` after `GROUP BY` and `HAVING`.
+
+```sql
+SELECT
+    department,
+    COUNT(*) AS employee_count
+FROM employees
+GROUP BY department
+ORDER BY employee_count DESC;
+```
+
+### 14. Can an aggregate alias be used in HAVING?
+
+MySQL usually allows it, but using the aggregate expression directly is more portable across database systems.
+
+### 15. What happens to NULL values in GROUP BY?
+
+Rows containing `NULL` in the grouping column normally form one separate group.
+
+### 16. How do you display NULL groups as Unassigned?
+
+```sql
+SELECT
+    COALESCE(department, 'Unassigned') AS department_name,
+    COUNT(*) AS employee_count
+FROM employees
+GROUP BY COALESCE(department, 'Unassigned');
+```
+
+### 17. How do you return the department with the highest total salary?
+
+```sql
+SELECT
+    department,
+    SUM(salary) AS total_salary
+FROM employees
+GROUP BY department
+ORDER BY total_salary DESC
+LIMIT 1;
+```
+
+### 18. What is the logical order of WHERE, GROUP BY, and HAVING?
+
+```text
+WHERE
+GROUP BY
+HAVING
+```
+
+### 19. Why should normal conditions be placed in WHERE instead of HAVING?
+
+`WHERE` filters rows earlier, reduces the amount of data being grouped, and usually improves clarity and efficiency.
+
+### 20. How are GROUP BY and HAVING useful in application support?
+
+They help summarize tickets, count failed transactions, identify repeated errors, calculate technician workloads, and detect users with repeated login failures.
